@@ -7,12 +7,12 @@ reference : https://github.com/resilience4j/resilience4j
 
 # Resileence4j Patterens.
 Ada beberapa Pttrens pada liberary resilience4j :
-    - Retry, unutk mengulangi eksekusi yang gagal.
-    - Circuit Breaker, sementara menolak eksekusi yang memungkinkan gagal.
-    - Rate Limiter, membatasi eksekusi dalam kurun waktu tertentu.
-    - Time Limiter, membatasi durasi waktu eksekusi.
-    - Bulkhed, membatasi eksekusi yang terjadi secara bebarengan/bersamaan.
-    - Chache, mengingat hasil eksekusi yang sukses.
-    - Fallback, menyediakan alternatif hasil dari eksekusi yang gagal.
+    * Retry, unutk mengulangi eksekusi yang gagal.
+    * Circuit Breaker, sementara menolak eksekusi yang memungkinkan gagal.
+    * Rate Limiter, membatasi eksekusi dalam kurun waktu tertentu.
+    * Time Limiter, membatasi durasi waktu eksekusi.
+    * Bulkhed, membatasi eksekusi yang terjadi secara bebarengan/bersamaan.
+    * Chache, mengingat hasil eksekusi yang sukses.
+    * Fallback, menyediakan alternatif hasil dari eksekusi yang gagal.
 
 
