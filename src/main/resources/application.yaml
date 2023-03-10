@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: reselince4j
+  devtools:
+    add-properties: true
+    livereload:
+      enabled: true
+server:
+  port: "8080"
