@@ -1,15 +1,17 @@
 package com.reselince4j;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@SpringBootTest
 class Reselince4jApplicationTests {
 
 	public void callMe() {
@@ -64,4 +66,61 @@ class Reselince4jApplicationTests {
 		supplier.get();
 	}
 
+	public String retryConfex(String arg) {
+		if(arg.equalsIgnoreCase("Alliano")) {
+			log.info(arg + " detected");
+			throw new IllegalArgumentException("Alliano detected");
+		}
+		else if(arg.equalsIgnoreCase("Itachi")) {
+			log.info(arg + " detected");
+			throw new RuntimeException("Itachi detected");
+		}
+		return "OK";
+	}
+
+	@Test
+	public void retryConfiguration() {
+		
+		RetryConfig retryConfiguration = RetryConfig.custom()
+		.maxAttempts(5)
+		.waitDuration(Duration.ofSeconds(2))
+		/**
+		 * ignoreException() ini berarti jikalau ada error dengan tipe 
+		 * IllegalArgumentException maka error akan tetap di 
+		 * throw (akan tetap di lemparkan) dan
+		 * tidak akan di retry lagi (hanya di eksekusi satu kali)
+		 *  */ 
+		.ignoreExceptions(IllegalArgumentException.class)
+		/**
+		 * retryException(), ini berarti jikala terjadi error dengan tipe
+		 * RuntimeException() maka retry dari eksekusi kode akan dilakukan
+		 */
+		.retryExceptions(RuntimeException.class)
+		.build();
+		Retry retry = Retry.of("retryConf", retryConfiguration);
+		Supplier<String> supplier = Retry.decorateSupplier(retry, () -> retryConfex("Itachi"));
+		supplier.get();
+	}
+
+	@Test
+	public void testRetryRegistry() {
+		/**
+		 * ini kita membuat object retryRegistry degan menggunakan
+		 * konfigurasi default
+		 */
+		RetryRegistry retryRegistry = RetryRegistry.ofDefaults();
+
+		/**
+		 * saat kita melakukan retryRegistry.retry("retryRegistry");
+		 * ini artinya kita membuat object retry dengan nama retryRegistry
+		 * dan ketika kita melakukan hal tersebut lebih dari 1x
+		 * maka RetryRegistry tidak akan membuat ulang object
+		 * melainkan akan mengembalikan object yang sama
+		 * jadi variabel retry1 dan retry2 itu adalah object yang sama
+		 */
+		Retry retry1 = retryRegistry.retry("retryRegistry");
+		Retry retry2 = retryRegistry.retry("retryRegistry");
+
+		Assertions.assertSame(retry1, retry2);
+	}
 }
