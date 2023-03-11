@@ -115,3 +115,74 @@ Untuk meng konfigurasi Retry kita bisa membuat Object RetryConfig sebelum membua
 | maxAttemps	 |	3		| Seberapa banyak Retry Dilakukan			|
 | waitDuration	 |	50ms	| Waktu menunggu sebelum melakukan Retry	|
 | ignoreException|	empty	| Jenis Error yang tidak akan di Retry		|
+
+untuk lebih lengkapnya bisa kunjungi disini https://resilience4j.readme.io/docs/retry#create-and-configure-retry
+
+example :
+``` java
+	public String retryConfex(String arg) {
+		if(arg.equalsIgnoreCase("Alliano")) {
+			log.info(arg + " detected");
+			throw new IllegalArgumentException("Alliano detected not Allowed");
+		}
+		else if(arg.equalsIgnoreCase("Itachi")) {
+			log.info(arg + " detected not Allowed");
+			throw new RuntimeException("Itachi detected");
+		}
+		return "OK";
+	}
+
+	@Test
+	public void retryConfiguration() {
+		
+		RetryConfig retryConfiguration = RetryConfig.custom()
+		.maxAttempts(5)
+		.waitDuration(Duration.ofSeconds(2))
+		/**
+		 * ignoreException() ini berarti jikalau ada error dengan tipe 
+		 * IllegalArgumentException maka error akan tetap di 
+		 * throw (akan tetap di lemparkan) dan
+		 * tidak akan di retry lagi (hanya di eksekusi satu kali)
+		 *  */ 
+		.ignoreExceptions(IllegalArgumentException.class)
+		/**
+		 * retryException(), ini berarti jikala terjadi error dengan tipe
+		 * RuntimeException() maka retry dari eksekusi kode akan dilakukan
+		 */
+		.retryExceptions(RuntimeException.class)
+		.build();
+		Retry retry = Retry.of("retryConf", retryConfiguration);
+		Supplier<String> supplier = Retry.decorateSupplier(retry, () -> retryConfex("Itachi"));
+		supplier.get();
+	}
+```
+# Retry Registry
+Saat kita belajar java database, kita mengenal yang namanya database pooling, yaitu tempat untuk menyimpan semua koneksi ke database.
+Resilience4j juga memiliki konsep ini, dengan nama Registry.
+Registry adalah tempat untuk mentimpan object-object dari Resilience4j.
+Dengan menggunakan Registry, kita bisa menggunakan ulang object yang sudah kita buat tampa harus membuat ulang object baru.
+Penggunaan Registry adalah salahsatu best practice yang direkomendasikan ketika menggunakan Resilience4j.
+
+``` java
+	@Test
+	public void testRetryRegistry() {
+		/**
+		 * ini kita membuat object retryRegistry degan menggunakan
+		 * konfigurasi default
+		 */
+		RetryRegistry retryRegistry = RetryRegistry.ofDefaults();
+
+		/**
+		 * saat kita melakukan retryRegistry.retry("retryRegistry");
+		 * ini artinya kita membuat object retry dengan nama retryRegistry
+		 * dan ketika kita melakukan hal tersebut lebih dari 1x
+		 * maka RetryRegistry tidak akan membuat ulang object
+		 * melainkan akan mengembalikan object yang sama
+		 * jadi variabel retry1 dan retry2 itu adalah object yang sama
+		 */
+		Retry retry1 = retryRegistry.retry("retryRegistry");
+		Retry retry2 = retryRegistry.retry("retryRegistry");
+		Assertions.assertSame(retry1, retry2);
+	}
+```
+
