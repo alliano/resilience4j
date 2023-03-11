@@ -123,4 +123,37 @@ class Reselince4jApplicationTests {
 
 		Assertions.assertSame(retry1, retry2);
 	}
+
+	@Test
+	public void testRegistryConfig() {
+
+		// membuat konfigurasi untuk RetryRegistry
+		RetryConfig retryConfiguration = RetryConfig.custom()
+		.maxAttempts(5)
+		.waitDuration(Duration.ofSeconds(2))
+		.build();
+
+		/**
+		 * jikalau kita melakukan seperti ini, maka artinya
+		 * kita membuat object RetryRegistry dengan konfigurasi
+		 * default.
+		 * 
+		 * untuk menambahakan konfigurasi pada RetryRegistry ada beberapa
+		 * cara yaitu dengan menggunakan method of(RetryConfig), atau menggunakan 
+		 * method addConfiguration(name, RetryConfig) dengan 2 parameter :
+		 * name -> nama konfigurasi kita
+		 * RetryConfig -> konfigurasi Retry kita
+		 */
+		RetryRegistry retryRegistry = RetryRegistry.ofDefaults();
+		retryRegistry.addConfiguration("configurationRetry", retryConfiguration);
+
+		Retry retry1 = retryRegistry.retry("retryRegistry");
+		Retry retry2 = retryRegistry.retry("retryRegistry");
+
+		Assertions.assertSame(retry1, retry2);
+
+		Runnable runnable = Retry.decorateRunnable(retry2, () -> callMe());
+
+		runnable.run();
+	}
 }
