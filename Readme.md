@@ -147,7 +147,8 @@ example :
 		.ignoreExceptions(IllegalArgumentException.class)
 		/**
 		 * retryException(), ini berarti jikala terjadi error dengan tipe
-		 * RuntimeException() maka retry dari eksekusi kode akan dilakukan
+		 * RuntimeException() maka retry akan dilakukan sebanyak
+		 * konfigurasi yang kita set (maxAttemps())
 		 */
 		.retryExceptions(RuntimeException.class)
 		.build();
