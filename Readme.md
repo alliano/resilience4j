@@ -103,3 +103,15 @@ Menggunakan Retry untuk method yang mengembalikan Object
 		supplier.get();
 	}
 ```
+
+# Retry Configuration
+Saat kita membuat Retry menggunakan Retry.ofDefaults(), secara otomatis kita akan menggunakan pengaturan default.
+Kadang pada kasus tertentu kita ingin menentukan pengaturan untuk Retry secara manual, contohnya ketika kita ingin menentukan berapakali melakukan retry ketika method gagal.
+Untuk meng konfigurasi Retry kita bisa membuat Object RetryConfig sebelum membuat Object Retry.
+
+# Pengaturan Retry
+| Pengaturan	| Default	| Keterangan								|
+|-----------------------------------------------------------------------|
+| maxAttemps	 |	3		| Seberapa banyak Retry Dilakukan			|
+| waitDuration	 |	50ms	| Waktu menunggu sebelum melakukan Retry	|
+| ignoreException|	empty	| Jenis Error yang tidak akan di Retry		|
