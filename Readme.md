@@ -187,3 +187,42 @@ Penggunaan Registry adalah salahsatu best practice yang direkomendasikan ketika 
 	}
 ```
 
+# Config RetryRegistry
+Salahsatu yang menarik di RetryRegistry yaitu kita bisa menambahkan defautl atau menambahakan default config atau menambahkan config yang sama dengan nama Retry nya.
+Jika saat kita membuat RetryRegistry kita tidak menyertakan nama config nya, maka itu akan menggunakan default config.
+
+``` java
+	@Test
+	public void testRegistryConfig() {
+
+		// membuat konfigurasi untuk RetryRegistry
+		RetryConfig retryConfiguration = RetryConfig.custom()
+		.maxAttempts(5)
+		.waitDuration(Duration.ofSeconds(2))
+		.build();
+
+		/**
+		 * jikalau kita melakukan seperti ini, maka artinya
+		 * kita membuat object RetryRegistry dengan konfigurasi
+		 * default.
+		 * 
+		 * untuk menambahakan konfigurasi pada RetryRegistry ada beberapa
+		 * cara yaitu dengan menggunakan method of(RetryConfig), atau menggunakan 
+		 * method addConfiguration(name, RetryConfig) dengan 2 parameter :
+		 * name -> nama konfigurasi kita
+		 * RetryConfig -> konfigurasi Retry kita
+		 */
+		RetryRegistry retryRegistry = RetryRegistry.ofDefaults();
+		retryRegistry.addConfiguration("configurationRetry", retryConfiguration);
+
+		Retry retry1 = retryRegistry.retry("retryRegistry");
+		Retry retry2 = retryRegistry.retry("retryRegistry");
+
+		Assertions.assertSame(retry1, retry2);
+
+		Runnable runnable = Retry.decorateRunnable(retry2, () -> callMe());
+
+		runnable.run();
+	}
+```
+
