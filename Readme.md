@@ -110,8 +110,8 @@ Kadang pada kasus tertentu kita ingin menentukan pengaturan untuk Retry secara m
 Untuk meng konfigurasi Retry kita bisa membuat Object RetryConfig sebelum membuat Object Retry.
 
 # Pengaturan Retry
-| Pengaturan	| Default	| Keterangan								|
-|-----------------------------------------------------------------------|
+| Pengaturan	 | Default	| Keterangan								|
+|----------------|----------|-------------------------------------------|
 | maxAttemps	 |	3		| Seberapa banyak Retry Dilakukan			|
 | waitDuration	 |	50ms	| Waktu menunggu sebelum melakukan Retry	|
 | ignoreException|	empty	| Jenis Error yang tidak akan di Retry		|
