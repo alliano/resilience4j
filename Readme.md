@@ -268,7 +268,7 @@ Saat kita membuat RateLimiter.ofDefault(), ini artinya kita membuat object RateL
 |-----------------------|-----------------------|-----------------------------------------------------------------------------------|
 |	timeOutDuration		|	5[s] lima detik		|	Waktu maksimal menunggu Rate Limiter											|
 |	limitRefreshPeriod	|	500[ns] nano second	|	Durasi refresh, setelah mencapai waktu refresh, hitungan limit akan kembali ke 0|
-|	limitForPeriod		|	50[s] 50 detik		|	Jumlah request yang diperbolehkan												|
+|	limitForPeriod		|	50[s] 50 detik		|	Jumlah yang diperbooehkan dalam kurun waktu refresh								|
 
 contoh : 
 ``` java
