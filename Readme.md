@@ -301,10 +301,56 @@ contoh :
         .build();
         RateLimiter reteLimiter = RateLimiter.of("rateLimiter", rateLimiterConfiguration);
 
-        Runnable runnable = RateLimiter.decorateRunnable(reteLimiter, () -> {
+        for(var i = 0; i< 10_000; i++) {
+            Runnable runnable = RateLimiter.decorateRunnable(reteLimiter, () -> {
+                long result = this.counter.incrementAndGet();
+                log.info("Result {}", result);
+            });
+            runnable.run();
+        }
+    }
+```
+
+# RateLimiterRegistry
+Sama seperti RetryRegistry, RateLimiter juga memiliki Registry untuk melakukan management object RateLimiter.
+Dan sebaik nya, ketika membuat appikasi, kita menggunakan Registry untuk melakukan management object RateLimiter.
+
+contoh penggunakan ReteLimiterRegistry :
+``` java
+    @Test
+    public void testRateLimiterRegistry() {
+        // disini kita membutat RateLimiterConfig untuk mengkonfigurasi RateLimiter
+        RateLimiterConfig rateLimiterConfiguration = RateLimiterConfig.custom()
+        // melakukan reset atau refresh pada counter(penghitung) dari requst yang masuk
+        .limitRefreshPeriod(Duration.ofMinutes(1))
+        // jumlah requst yang diizinkan masuk per 1 menit nya
+        .limitForPeriod(100)
+        // jika waktu eksekusi requst nya lebih dari 10 detik maka akan di throw exception
+        .timeoutDuration(Duration.ofSeconds(2))
+        .build();
+        // membuat object RateLimiterRegistry untuk me manage object RateLimiter kita
+        RateLimiterRegistry rateLimiterRegistry = RateLimiterRegistry.ofDefaults();
+        // menambahkan konfigurasi pada RateLimiter
+        rateLimiterRegistry.addConfiguration("rateLimiterRegistryConf", rateLimiterConfiguration);
+        /**
+         * disini kita mambuat object RateLimiter dengan memanfaatkan method rateLimiter() yang menerima
+         * 2 parameter yaitu :
+         * name -> nama rateLimiter nya
+         * configName -> nama object konfigurasi RateLimiter yang sudah kita tambahakan pada RateLimiterRegistry
+         * perlu diingat jikalau kita membuat object RateLimiter dengan nama yang sama maka
+         * obejct RateLimiter hanya di buat 1x, artinya object rateLimiter1 dan rateLimiter2 itu sama
+         */
+        RateLimiter rateLimiter1 = rateLimiterRegistry.rateLimiter("rateLimiter","rateLimiterRegistryConf");
+        RateLimiter rateLimiter2 = rateLimiterRegistry.rateLimiter("rateLimiter","rateLimiterRegistryConf");
+
+        Assertions.assertSame(rateLimiter1, rateLimiter2);
+
+       for(var i = 0; i < 10_000; i++) {
+        Runnable runnable = RateLimiter.decorateRunnable(rateLimiter1, () -> {
             long result = this.counter.incrementAndGet();
             log.info("Result {}", result);
         });
         runnable.run();
+       }
     }
 ```
