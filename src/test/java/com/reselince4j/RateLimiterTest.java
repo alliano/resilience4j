@@ -85,11 +85,11 @@ public class RateLimiterTest {
         // disini kita membutat RateLimiterConfig untuk mengkonfigurasi RateLimiter
         RateLimiterConfig rateLimiterConfiguration = RateLimiterConfig.custom()
         // melakukan reset atau refresh pada counter(penghitung) dari requst yang masuk
-        .limitRefreshPeriod(Duration.ofMinutes(1))
+        .limitRefreshPeriod(Duration.ofMinutes(2))
         // jumlah requst yang diizinkan masuk per 1 menit nya
         .limitForPeriod(100)
         // jika waktu eksekusi requst nya lebih dari 10 detik maka akan di throw exception
-        .timeoutDuration(Duration.ofSeconds(2))
+        .timeoutDuration(Duration.ofSeconds(1))
         .build();
         // membuat object RateLimiterRegistry untuk me manage object RateLimiter kita
         RateLimiterRegistry rateLimiterRegistry = RateLimiterRegistry.ofDefaults();
@@ -109,11 +109,21 @@ public class RateLimiterTest {
         Assertions.assertSame(rateLimiter1, rateLimiter2);
 
        for(var i = 0; i < 10_000; i++) {
+        try {
+            Thread.sleep(60000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Runnable runnable = RateLimiter.decorateRunnable(rateLimiter1, () -> {
             long result = this.counter.incrementAndGet();
             log.info("Result {}", result);
         });
         runnable.run();
        }
+    }
+
+    @Test
+    public void test() {
+        log.info(String.valueOf(Runtime.getRuntime().availableProcessors()));
     }
 }
