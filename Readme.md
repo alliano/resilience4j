@@ -358,8 +358,8 @@ contoh penggunakan ReteLimiterRegistry :
 # Bulkhead
 Resilience4j modul unutk menjaga jumlah eksekusi concurrent menggunakan Bulkhead.
 Terdapat dua implementasi Bulkhead yang kita bisa pakai di Resilience4j :
-- semaphore
-- fix Threadpool
+- semaphore, makdsudnya dalam waktu yang bersamaan tidak boleh menjalankan thread lebih dari yang ditentukan.
+- fix Threadpool, artinya dalam waktu yang bersamaan tidak boleh menjalankan thread melebihi jumlah core yang dimiliki oleh processor kalian.
 Jika Bulkhead sudah penuh, maka Bulkhead akan meng throw exception dengan tipe BulkheadFullException.
 
 example for semaphore :
