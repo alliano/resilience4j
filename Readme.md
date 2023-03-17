@@ -425,7 +425,10 @@ example for fix Threadpool :
              * otomatis di jalanakan)
              * 
              * disini kana terjadi error ketika jumlah excecution palarel nya
-             * lebih dari core processor komputer yang dipakai
+             * lebih dari core processor yang dimiki komputer kalian
+             * untuk mengetahui berapa core yang dimiliki processor kalian, bisa
+             * jalankan kode berikut ini 
+             * log.info(String.valueOf(Runtime.getRuntime().availableProcessors()));
              */
             Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(bulkheadThreadPool, () -> slowAction());
             supplier.get();
