@@ -513,10 +513,66 @@ contoh :
         ThreadPoolBulkhead threadPoolBulkhead = ThreadPoolBulkhead.of("fixThreadPoolConfig", fixThreadPoolConfiguration);
         
         for(var i = 0; i < 20; i ++) {
+            /**
+             * sebelum program di eksekusi, semua pekerjaan akan masuk di antrian/queue terlebih dahulu, dan kapasitas
+             * antrianya itu sesuai dengan yang kita set pada ThreadPoolBulkheadConfig dengan method queueCapacity
+             * dan beberapa thread akan dijalankan sejumlah dengan yang kita set pada mehtod coreThreadPoolSize
+             * */
             Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(threadPoolBulkhead, () -> slowAction());
             supplier.get();
         }
         Thread.sleep(10_000L);
     }
 ```
-# 
+# BulkheadRegistry
+Sama dengan module lainya, bulkhead juga memiliki registry.
+Baik itu semaphore maupun Fix ThreadPool Bulkhead.
+
+
+contoh semaphore registry :
+``` java
+    @Test @SneakyThrows
+    public void testSemaphoreRegistry() {
+        BulkheadConfig bulkheadConfig = BulkheadConfig.custom()
+        .maxConcurrentCalls(5)
+        .maxWaitDuration(Duration.ofSeconds(6))
+        .build();
+
+        BulkheadRegistry bulkheadRegistry = BulkheadRegistry.ofDefaults();
+        // menambahakan konfigurasi pada bulkhead registry dengan nama bulkheadConfiguration
+        bulkheadRegistry.addConfiguration("bulkheadConfiguration", bulkheadConfig);
+        // membuat object Bulkhead dari object BulkheadRegistry dan menggunakan konfigurasi yang 
+        // telah kita definisikan diatas
+        Bulkhead bulkhead = bulkheadRegistry.bulkhead("bulkheadRegistry", bulkheadConfig);
+
+        for (int i = 0; i < 10; i++) {
+            Runnable runnable = Bulkhead.decorateRunnable(bulkhead, () -> slowAction());
+            new Thread(runnable).start();
+        }
+        Thread.sleep(10_000L);
+    }
+```
+contoh fix threadpoolRegistry :
+``` java
+    @Test @SneakyThrows
+    public void testFixThreadPoolRegistry() {
+        ThreadPoolBulkheadConfig threadPoolBulkheadConf = ThreadPoolBulkheadConfig.custom()
+        .maxThreadPoolSize(5)
+        .coreThreadPoolSize(5)
+        .queueCapacity(100)
+        .build();
+
+        ThreadPoolBulkheadRegistry threadPoolBulkheadRegistry = ThreadPoolBulkheadRegistry.ofDefaults();
+        // menambahkan konfigurasi pada threadPoolBulkheadRegistry dengan nama threadPoolConfig
+        threadPoolBulkheadRegistry.addConfiguration("threadPoolConfig", threadPoolBulkheadConf);
+        // membuat object dari threadPoolBulkheadRegistry dengan menggunakan konfigurasi yang telah
+        // kita buat diatas
+        ThreadPoolBulkhead threadPoolBulkhead = threadPoolBulkheadRegistry.bulkhead("threadPoolBulkhead", threadPoolBulkheadConf);
+
+        for(var i = 0; i < 10; i++){
+            Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(threadPoolBulkhead, () -> slowAction());
+            supplier.get();
+        }
+        Thread.sleep(10_000L);
+    }
+```
