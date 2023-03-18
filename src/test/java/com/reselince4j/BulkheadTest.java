@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
+import io.github.resilience4j.bulkhead.BulkheadRegistry;
 import io.github.resilience4j.bulkhead.ThreadPoolBulkhead;
 import io.github.resilience4j.bulkhead.ThreadPoolBulkheadConfig;
+import io.github.resilience4j.bulkhead.ThreadPoolBulkheadRegistry;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -127,12 +129,55 @@ public class BulkheadTest {
          * queueCapacity, ini digunakan untuk memberi maksimal antrian tugas yang akan di jalankan
          * defautnya jikalau kita nga set antrian yang diterima 100
          */
-        .queueCapacity(1)
+        .queueCapacity(100)
         .build();
         
         ThreadPoolBulkhead threadPoolBulkhead = ThreadPoolBulkhead.of("fixThreadPoolConfig", fixThreadPoolConfiguration);
         
         for(var i = 0; i < 20; i ++) {
+            Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(threadPoolBulkhead, () -> slowAction());
+            supplier.get();
+        }
+        Thread.sleep(10_000L);
+    }
+
+    @Test @SneakyThrows
+    public void testSemaphoreRegistry() {
+        BulkheadConfig bulkheadConfig = BulkheadConfig.custom()
+        .maxConcurrentCalls(5)
+        .maxWaitDuration(Duration.ofSeconds(6))
+        .build();
+
+        BulkheadRegistry bulkheadRegistry = BulkheadRegistry.ofDefaults();
+        // menambahakan konfigurasi pada bulkhead registry dengan nama bulkheadConfiguration
+        bulkheadRegistry.addConfiguration("bulkheadConfiguration", bulkheadConfig);
+        // membuat object Bulkhead dari object BulkheadRegistry dan menggunakan konfigurasi yang 
+        // telah kita definisikan diatas
+        Bulkhead bulkhead = bulkheadRegistry.bulkhead("bulkheadRegistry", bulkheadConfig);
+
+        for (int i = 0; i < 10; i++) {
+            Runnable runnable = Bulkhead.decorateRunnable(bulkhead, () -> slowAction());
+            new Thread(runnable).start();
+        }
+        Thread.sleep(10_000L);
+    }
+
+    @Test @SneakyThrows
+    public void testFixThreadPoolRegistry() {
+        ThreadPoolBulkheadConfig threadPoolBulkheadConf = ThreadPoolBulkheadConfig.custom()
+        .maxThreadPoolSize(5)
+        .coreThreadPoolSize(5)
+        .queueCapacity(100)
+        .build();
+
+        ThreadPoolBulkheadRegistry threadPoolBulkheadRegistry = ThreadPoolBulkheadRegistry.ofDefaults();
+        // menambahkan konfigurasi pada threadPoolBulkheadRegistry dengan nama threadPoolConfig
+        threadPoolBulkheadRegistry.addConfiguration("threadPoolConfig", threadPoolBulkheadConf);
+        // membuat object dari threadPoolBulkheadRegistry dengan menggunakan konfigurasi yang telah
+        // kita buat diatas
+        ThreadPoolBulkhead threadPoolBulkhead = threadPoolBulkheadRegistry.bulkhead("threadPoolBulkhead", threadPoolBulkheadConf);
+
+        for(var i = 0; i < 10; i++){
             Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(threadPoolBulkhead, () -> slowAction());
             supplier.get();
         }
