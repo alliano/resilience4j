@@ -576,3 +576,30 @@ contoh fix threadpoolRegistry :
         Thread.sleep(10_000L);
     }
 ```
+
+# TimeLimiter
+TimeLimiter merupakan module di resilience4j yang digunakan untuk membatasi durasi dari eksekusi kode program.
+Dengan TimeLimiter, kita bisa menentukan berapa maksimnal durasi eksekusi sebuah kode program, jikalau eksekusi kode programnya melebihi yang telah ditentukan, maka eksekusi tersebut akan dibatalkan dan akan terjadi exception.
+Untuk menggunakan TimeLimiter kita membutuhkan eksekusi dalam bentuk Future atau CompletableFuture.
+
+contoh : 
+``` java
+    @Test @SneakyThrows
+    public void testTimeLimiter() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        /**
+         * disini kita membungkus return value dari method slowAction() kedalam
+         * object yang bernama Futute<T> karna untuk menajalankan TimeLimmiter itu 
+         * kita harus membugkus aksi atau pekerjaan yang akan di eksekusi 
+         * kedalam Future<T> atau CompletionStage<T>
+         * 
+         * utnk pembahasan ExceutorService dan Future dll ini akan di bahas di materi yang lain
+         */
+        Future<String> future =  executorService.submit(() -> slowAction());
+        
+        TimeLimiter timeLimiter = TimeLimiter.ofDefaults("timeLimiter");
+        Callable<String> callable =  TimeLimiter.decorateFutureSupplier(timeLimiter, () -> future);
+        
+        callable.call();
+    }
+```
