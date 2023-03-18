@@ -435,3 +435,88 @@ example for fix Threadpool :
         }
     }
 ```
+
+# Bulkhead Configuration.
+Seperti module sebelumnya, kita juga bisa mengkonfigurasi pengaturan bulkhead.
+Akan tetapi pengaturanya harus disesuaikan dengan implementasi bulkhead yang kita gunakan, baik itu semaphore atau Fix ThreadPool.
+
+configuration default semaphore Bulkhead :
+|   config property     |   default value   |   description                                                |
+|-----------------------|-------------------|--------------------------------------------------------------|
+|   maxConcurrentCalls  |         25        |   maksimal eksekusi prgram secara palarel yang diperbolehkan.|
+|   maxWaitDuration     |         0         |   maksimal waktu menunggu durasi saat eksekusi bulkhead.     |
+
+contoh :
+``` java
+    @Test @SneakyThrows
+    public void testSemaphoreConfiguration() {
+        BulkheadConfig bulkheadConfiguration = BulkheadConfig.custom()
+        /**
+         * maxConcurrentCalls, adalah maksimal thread yang boleh
+         * dieksekusi dalam satu waktu yang bersamaan, jikalau melebihi 10 
+         * maka akan terjadi exception
+         */
+        .maxConcurrentCalls(5)
+        /**
+         * maxWaitDuration, adalah maksimala waktu tunggu eksekusi
+         * thread, misalnya kita meng set maxConcurrentCalls nya 10 maka
+         * dalam 1 waktu tersebut hanya boleh ada 10 thread yang jalan.
+         * Setelah 10 thread tersebut jalan maka maxWaitDuration ini akan dijalankan
+         * misal pada maxWaitDuration nya kita set 5 detik maka 
+         * dalam 10 thread yang jalan tersebut harus selesai dalam 5 detik, kalo nga selesai
+         * maka akan terjadi exception, akan terapi eksekusi kodenya tetap dilakukan hingga selesai.
+         */
+        .maxWaitDuration(Duration.ofSeconds(5))
+        .build();
+        // membuat object bulkhead dengan menggunakan konfigurasi yang telah kita buat diatas
+        Bulkhead bulkhead = Bulkhead.of("bulkheadConfiguration", bulkheadConfiguration);
+        for (int i = 0; i < 50; i++) {
+            Runnable runnable = Bulkhead.decorateRunnable(bulkhead, () -> slowAction());
+            new Thread(runnable).start();
+        } 
+        Thread.sleep(10_000L);
+    }
+```
+
+# configuration default Fix ThreadPool
+|   configuration property  |   default value                               |   description                                                    |
+|---------------------------|-----------------------------------------------|------------------------------------------------------------------|
+|   maxThreadPoolSize       |   Runtime.getRuntime.availableProcessors()    |   maksimal thread yang boleh berada pada scope pool              |
+|   coreThreadPoolSize      |   Runtime.getRuntime.availableProcessors()-1  |   minimal thread awal yang terdapat pada scope pool              |
+|   queueCapacity           |                       100                     |   kapasitas antrian                                              |
+|   keepAliveDuration       |                       20[ms]                  |   lama thread hidup jika tidak bekerja (thread tidak digunakan)  |
+
+contoh :
+``` java
+    @Test @SneakyThrows
+    public void testFixThreadPoolConfiguration() {
+
+        ThreadPoolBulkheadConfig fixThreadPoolConfiguration = ThreadPoolBulkheadConfig.custom()
+        /**
+         * maxThreadPoolSize, ini untuk membatasi maksimal thread yang akan dieksekusi dalam satu waktu
+         * jikalau kita set 5 maka artinya jikalau thread yang jalan itu cukup banyak maka thread pool 
+         * akan menambahkan jumlah thread yang digunakan hingga mencapai batas maksimum (5)
+         */
+        .maxThreadPoolSize(5)
+        /**
+         * coreThreadPoolSize, ini digunakan untuk mengeksekusi thread yang diambil dari queueCapasity
+         * jikalau kita set dengan 5 maka artinya dalam 1 waktu akan menjalankan 5 thread
+         */
+        .coreThreadPoolSize(5)
+        /**
+         * queueCapacity, ini digunakan untuk memberi maksimal antrian tugas yang akan di jalankan
+         * defautnya jikalau kita nga set antrian yang diterima 100
+         */
+        .queueCapacity(1)
+        .build();
+        
+        ThreadPoolBulkhead threadPoolBulkhead = ThreadPoolBulkhead.of("fixThreadPoolConfig", fixThreadPoolConfiguration);
+        
+        for(var i = 0; i < 20; i ++) {
+            Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(threadPoolBulkhead, () -> slowAction());
+            supplier.get();
+        }
+        Thread.sleep(10_000L);
+    }
+```
+# 
