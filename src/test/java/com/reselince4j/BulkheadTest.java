@@ -1,5 +1,6 @@
 package com.reselince4j;
 
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -7,7 +8,9 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.bulkhead.ThreadPoolBulkhead;
+import io.github.resilience4j.bulkhead.ThreadPoolBulkheadConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,5 +77,65 @@ public class BulkheadTest {
             Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(bulkheadThreadPool, () -> slowAction());
             supplier.get();
         }
+    }
+
+    @Test @SneakyThrows
+    public void testSemaphoreConfiguration() {
+        BulkheadConfig bulkheadConfiguration = BulkheadConfig.custom()
+        /**
+         * maxConcurrentCalls, adalah maksimal thread yang boleh
+         * dieksekusi dalam satu waktu yang bersamaan, jikalau melebihi 10 
+         * maka akan terjadi exception
+         */
+        .maxConcurrentCalls(5)
+        /**
+         * maxWaitDuration, adalah maksimala waktu tunggu eksekusi
+         * thread, misalnya kita meng set maxConcurrentCalls nya 10 maka
+         * dalam 1 waktu tersebut hanya boleh ada 10 thread yang jalan.
+         * Setelah 10 thread tersebut jalan maka maxWaitDuration ini akan dijalankan
+         * misal pada maxWaitDuration nya kita set 5 detik maka 
+         * dalam 10 thread yang jalan tersebut harus selesai dalam 5 detik, kalo nga selesai
+         * maka akan terjadi exception, akan terapi eksekusi kodenya tetap dilakukan hingga selesai.
+         */
+        .maxWaitDuration(Duration.ofSeconds(5))
+        .build();
+        // membuat object bulkhead dengan menggunakan konfigurasi yang telah kita buat diatas
+        Bulkhead bulkhead = Bulkhead.of("bulkheadConfiguration", bulkheadConfiguration);
+        for (int i = 0; i < 50; i++) {
+            Runnable runnable = Bulkhead.decorateRunnable(bulkhead, () -> slowAction());
+            new Thread(runnable).start();
+        }    
+        Thread.sleep(10_000L);
+    }
+
+    @Test @SneakyThrows
+    public void testFixThreadPoolConfiguration() {
+
+        ThreadPoolBulkheadConfig fixThreadPoolConfiguration = ThreadPoolBulkheadConfig.custom()
+        /**
+         * maxThreadPoolSize, ini untuk membatasi maksimal thread yang akan dieksekusi dalam satu waktu
+         * jikalau kita set 5 maka artinya jikalau thread yang jalan itu cukup banyak maka thread pool 
+         * akan menambahkan jumlah thread yang digunakan hingga mencapai batas maksimum (5)
+         */
+        .maxThreadPoolSize(5)
+        /**
+         * coreThreadPoolSize, ini digunakan untuk mengeksekusi thread yang diambil dari queueCapasity
+         * jikalau kita set dengan 5 maka artinya dalam 1 waktu akan menjalankan 5 thread
+         */
+        .coreThreadPoolSize(5)
+        /**
+         * queueCapacity, ini digunakan untuk memberi maksimal antrian tugas yang akan di jalankan
+         * defautnya jikalau kita nga set antrian yang diterima 100
+         */
+        .queueCapacity(1)
+        .build();
+        
+        ThreadPoolBulkhead threadPoolBulkhead = ThreadPoolBulkhead.of("fixThreadPoolConfig", fixThreadPoolConfiguration);
+        
+        for(var i = 0; i < 20; i ++) {
+            Supplier<CompletionStage<Void>> supplier = ThreadPoolBulkhead.decorateRunnable(threadPoolBulkhead, () -> slowAction());
+            supplier.get();
+        }
+        Thread.sleep(10_000L);
     }
 }
