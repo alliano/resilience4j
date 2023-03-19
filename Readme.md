@@ -689,4 +689,4 @@ Saat kita meggunakan Circuit Breaker kita bisa memilih cara kerja circuit breake
 - CircuitBreaker berdasarkan batas waktu, ini artinya circuit breaker akan menghitung jumlah eksekusi dalam N detik terakhir.
     + maksudnya adalh, N adalah lama waktu eksekusi terakhir, misalnya N nya kita set menjadi 10 detik berarti circuit breaker akan menghitung jumlah eksekusi 10 detik terakhir.
 
-[alt](https://github.com/alliano/resilience4j/blob/master/src/main/resources/img/circuitbreaker.jpg)
+![alt](https://github.com/alliano/resilience4j/blob/master/src/main/resources/img/circuitbreaker.jpg)
