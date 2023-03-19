@@ -644,4 +644,33 @@ contoh :
     }
 ```
 
-# 
+# TimeLimiterRegistry
+Sama dengan module lainya, TimeLimiter juga memiliki Registry untuk mengelola dan menyimpan Object dari TimeLimiter.
+
+contoh penggunakan TimeLimiterConfig : 
+``` java
+    @Test @SneakyThrows
+    public void testTimeLimiterRegistry() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Future<String> future = executorService.submit(() -> slowAction());
+
+        TimeLimiterConfig timeLimiterConfiguration = TimeLimiterConfig.custom()
+        .timeoutDuration(Duration.ofSeconds(10))
+        .cancelRunningFuture(true)
+        .build();
+        /**
+         * disini kita membuat Object TimeLimiterRegistry dengan nama kofigurasi timeLimiterRegistryconf
+         */
+        TimeLimiterRegistry timeLimiterRegistry = TimeLimiterRegistry.ofDefaults();
+        timeLimiterRegistry.addConfiguration("timeLimiterRegistryConf", timeLimiterConfiguration);
+
+        /**
+         * disini kita membuat Object TimeLimter dengan  nama timeLimiter dan
+         * menggunakan konfigurasi yang telah kita deklarasikan
+         * diatas
+         */
+        TimeLimiter timeLimiter = timeLimiterRegistry.timeLimiter("timeLimiter", "timeLimiterRegistryConf");
+        Callable<String> callable = TimeLimiter.decorateFutureSupplier(timeLimiter, () -> future);
+        callable.call();
+    }
+```
