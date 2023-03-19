@@ -677,8 +677,9 @@ contoh penggunakan TimeLimiterConfig :
 
 # CircuitBreaker
 Circuit Breaker adalalah implementasi dari finite state machine, dengan tiga normal state :
-- CLOSED,
-- HALF_OPEN,  
+- CLOSED, ini artinya semua requst akan diterima oleh circuit breaker.
+- HALF_OPEN, ini artinya circuit breaker akan menerima beberapa request saja.
+- OPEN, ini artinya circuit breaker tidak akan meneriam request.
 
 dan dengan dua special state :
 - DISABLED,
@@ -687,6 +688,33 @@ Saat kita meggunakan Circuit Breaker kita bisa memilih cara kerja circuit breake
 - CircuiBreaker berdasarkan hitungan, ini artinya circuit breaker akan menghitung data yaang masuk berdasarkan jumlah N eksekusi terakhir.
     + maksudnya adalah, N adalah jumlah eksekusi yang terakhir dilakukan oleh circuit breaker, misal N nya itu kita set 20, maka circuit breaker akan menghitung 20 eksekusi terkahir.
 - CircuitBreaker berdasarkan batas waktu, ini artinya circuit breaker akan menghitung jumlah eksekusi dalam N detik terakhir.
-    + maksudnya adalh, N adalah lama waktu eksekusi terakhir, misalnya N nya kita set menjadi 10 detik berarti circuit breaker akan menghitung jumlah eksekusi 10 detik terakhir.
-  
+    + maksudnya adalh, N adalah lama waktu eksekusi terakhir, misalnya N nya kita set menjadi 10 detik berarti circuit breaker akan menghitung jumlah eksekusi 10 detik terakhir.   
+Diagram CircuitBreaker  
 ![a diagram for circuit breaker](https://github.com/alliano/resilience4j/blob/master/src/main/resources/img/circuitbreaker.jpg)
+
+Secara default saat kita membuat circuit breaker, itu akan menggunakan state ClOSED. Jadi semua request akan diterima oleh circuit breaker, dan jikalu terjadi error atau tejadi kegagalan eksekusi kode program dan banyak kegagalanya lebih dari batasan gagal yang telah kita tentukan maka circuit breaker akan memasuki state OPEN, pada state OPEN ini circuit breaker tidak akan meneriapa requst sama sekali. Saat circuit breaker berada pada state OPEN, circuit breaker akan menunggu beberapa saat sesuai dengan setigan yang kita buat nanti sebelum memasuki state HALF_OPEN, setelah waktu tunggu selesai maka circuit breaker akan masuk pada state HALF_OPEN, di state ini circuit breaker akan menerima beberapa requst saja sesuai dengan setingan yang kita buat nanti, misalnya disetingan kita nanti pada saat circuit brealer berada di state HALF_OPEN circuit breaker hanya menerima 4 request saja, setelah itu circuit breaker akan mengeksekusi 4 request tesebut dan jikalau saat eksekusi 4 request tersebut gagal atau jumlah gagal eksekusinya lebih dari batasan gagal yang kita telah tentukan maka circuit breaker akan kemabali ke state OPEN dan jikalau 4 requst tersebut berhasil atau jumlah kegagalan eksekusinya kurang dari batasan gagal yang kita telah tentukan maka circuit breaker akan kembali lagi ke state CLOSE dan circuit breaker akan menerima semua requst dengan normal.   
+
+contoh membuat circuit breaker :
+``` java
+    public void callMe() {
+        log.info("wait....");
+        throw new RuntimeException("Sorry system error");
+    }
+
+    @Test
+    public void testCircuitBreaker() {
+        /**
+         * disini kita membuat object circuit breaker dengan nama circuitBreaker
+         */
+        CircuitBreaker circuitBreaker = CircuitBreaker.ofDefaults("circuitBreaker");
+
+        for (int i = 0; i < 200; i++) {
+            try {
+                Runnable runnable = CircuitBreaker.decorateRunnable(circuitBreaker, () -> callMe());
+                runnable.run();
+            } catch (Exception ECX) {
+                log.error("ERROR {}", ECX.getMessage());
+            }
+        }
+    }
+```
