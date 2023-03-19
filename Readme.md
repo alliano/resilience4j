@@ -603,3 +603,45 @@ contoh :
         callable.call();
     }
 ```
+
+# TimeLimiterConfig
+Secara default, TimeLimiter akan mengunggu lama waktu eksekusi suatu kode program selama 1 detik, jikalau dalam waktu 1 detik eksekusi tidak selesai maka TimeLimiter akan melemparkan Exception.
+Kita bisa mengubah konfigurasi dari TimeLimiter dengan menggunakan TimeLimiterConfig.
+
+configuration property TimeLimiter
+|   config property     |   Default value   |   keterangan                                                      |
+|-----------------------|-------------------|-------------------------------------------------------------------|
+|   timeOutDuration     |       1[s]        |   lama waktu tunggu eksekusi program sampai dianggap timeout      |
+|   cancelRunningFuture |       true        |   apakah eksekusi future dibatalkan jika terjadi Exception TimeOut|
+
+contoh :
+``` java
+    @Test @SneakyThrows
+    public void testTimeLimiterConfig() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Future<String> future = executorService.submit(() -> slowAction());
+
+        TimeLimiterConfig timeLimiterConifiguration = TimeLimiterConfig.custom()
+        /**
+         * timeoutDuration, ini maksudnya jikalau dalam 3 detik 
+         * eksekusi program tak kunjung selesai maka 
+         * timeoutDuration akan meng thorow exception
+         */
+        .timeoutDuration(Duration.ofSeconds(3))
+        /**
+         * cancelRunningFuture, ini maksudnya jikalau nanti terjadi exception pada
+         * timeoutDuration, maka eksekusi programnya akan terus di lajutkan
+         * atau tidak.
+         * jika tetap di lanjutkan maka kita bisa set parameter nya true 
+         * jika tidak bisa kita set dengan false
+         */
+        .cancelRunningFuture(true)
+        .build();
+
+        TimeLimiter timeLimiter = TimeLimiter.of("timeLimiter", timeLimiterConifiguration);
+        Callable<String> callable = TimeLimiter.decorateFutureSupplier(timeLimiter, () -> future);
+        callable.call();
+    }
+```
+
+# 
