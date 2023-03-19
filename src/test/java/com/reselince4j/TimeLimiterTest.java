@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.resilience4j.timelimiter.TimeLimiter;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,7 +54,7 @@ public class TimeLimiterTest {
          * eksekusi program tak kunjung selesai maka 
          * timeoutDuration akan meng thorow exception
          */
-        .timeoutDuration(Duration.ofSeconds(3))
+        .timeoutDuration(Duration.ofSeconds(10))
         /**
          * cancelRunningFuture, ini maksudnya jikalau nanti terjadi exception pada
          * timeoutDuration, maka eksekusi programnya akan terus di lajutkan
@@ -65,6 +66,31 @@ public class TimeLimiterTest {
         .build();
 
         TimeLimiter timeLimiter = TimeLimiter.of("timeLimiter", timeLimiterConifiguration);
+        Callable<String> callable = TimeLimiter.decorateFutureSupplier(timeLimiter, () -> future);
+        callable.call();
+    }
+
+    @Test @SneakyThrows
+    public void testTimeLimiterRegistry() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Future<String> future = executorService.submit(() -> slowAction());
+
+        TimeLimiterConfig timeLimiterConfiguration = TimeLimiterConfig.custom()
+        .timeoutDuration(Duration.ofSeconds(10))
+        .cancelRunningFuture(true)
+        .build();
+        /**
+         * disini kita membuat Object TimeLimiterRegistry dengan nama kofigurasi timeLimiterRegistryconf
+         */
+        TimeLimiterRegistry timeLimiterRegistry = TimeLimiterRegistry.ofDefaults();
+        timeLimiterRegistry.addConfiguration("timeLimiterRegistryConf", timeLimiterConfiguration);
+
+        /**
+         * disini kita membuat Object TimeLimter dengan  nama timeLimiter dan
+         * menggunakan konfigurasi yang telah kita deklarasikan
+         * diatas
+         */
+        TimeLimiter timeLimiter = timeLimiterRegistry.timeLimiter("timeLimiter", timeLimiterConfiguration);
         Callable<String> callable = TimeLimiter.decorateFutureSupplier(timeLimiter, () -> future);
         callable.call();
     }
