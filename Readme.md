@@ -681,7 +681,7 @@ Circuit Breaker adalalah implementasi dari finite state machine, dengan tiga nor
 - HALF_OPEN,  
 dan dengan dua special state :
 - DISABLED,
-- FORCE_OPEN,
+- FORCE_OPEN,  
 Saat kita meggunakan Circuit Breaker kita bisa memilih cara kerja circuit breaker berdasarkan waktu atau hitungan, unutk lebih detail nya sebagai berikut :
 - CircuiBreaker berdasarkan hitungan, ini artinya circuit breaker akan menghitung data yaang masuk berdasarkan jumlah N eksekusi terakhir.
     + maksudnya adalah, N adalah jumlah eksekusi yang terakhir dilakukan oleh circuit breaker, misal N nya itu kita set 20, maka circuit breaker akan menghitung 20 eksekusi terkahir.
