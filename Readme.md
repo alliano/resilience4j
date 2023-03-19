@@ -679,7 +679,6 @@ contoh penggunakan TimeLimiterConfig :
 Circuit Breaker adalalah implementasi dari finite state machine, dengan tiga normal state :
 - CLOSED,
 - HALF_OPEN,  
-**Enter**
 dan dengan dua special state :
 - DISABLED,
 - FORCE_OPEN,
