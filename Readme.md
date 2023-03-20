@@ -736,9 +736,126 @@ Kita bisa mengubahanya menjadi mode waktu, sehingga error rate dihitung berdasar
 |   slidingWindowSize                       |         100       |   Jumlah sliding window yang akan di record pada waktu state CLOSE                                                                   |
 |   minimumNumberOfCalls                    |         100       |   Jumlah minimal eksekusi sebelum error rate dihitung                                                                                |
 |   waitDurationInOpenState                 |       600[ms]     |   Waktu tunggu state OPEN sebelum memasuki state HALF_OPEN                                                                           |
-|   permitterNumberOfCallsInHalfOpenState   |         10        |   Jumlah eksekusi yang diperbolehkan ketika circuit breaker berada pada state HALF_OPEN                                              |
+|   permittedNumberOfCallsInHalfOpenState   |         10        |   Jumlah eksekusi yang diperbolehkan ketika circuit breaker berada pada state HALF_OPEN                                              |
 |   maxWaitDurationInHalfOpenState          |         0[ms]     |   Waku maksimal menunggu saat berada pada state HALF_OPEN untuk kemabali ke state OPEN. jika 0 artinya waktu tunggu tidak terbatas   |
 |   slowCallDurationThreshold               |       6000[ms]    |   Lama waktu eksekusi dianggap lambat                                                                                                |
 |   slowCallRateThreshold                   |         100       |   Konfigurasi Threshold untuk eksekusi slow, jika menyentuh threshold ini, maka state akan berubah menjadi OPEN                      |
 |   ignoreExceptions                        |        empty      |   Exception yang tidak dianggap error                                                                                                |
 
+
+contoj configuration circuit breaker :
+``` java
+    @Test
+    public void circuitBreakerConfiguration() {
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+        /**
+         * slidingWindowType(SlidingWindowType.COUNT_BASED), ini artinya
+         * circuit breaker akan berkerja dengan cara menghitung
+         * request yang dieksekusi.
+         * 
+         * dan jikalau kita ingin circuit breaker menghitung 
+         * request yang dieksekusi itu berdasarkan waktu maka kita bisa
+         * menggunakan parameter SlidingWindowType.TIME_BASED pada
+         * paramter method slidingWindowType.
+         * 
+         */
+        .slidingWindowType(SlidingWindowType.COUNT_BASED)
+        /**
+         * falufailureRateThreshold(10f), ini maksudnya jikalau error 
+         * rate nya itu lebih dari 10% maka state akan berubah menjadi CLOSE
+         * dan tidak menerima request lagi untuk bebebrapa waktu
+         */
+        .failureRateThreshold(10f)
+        /**
+         * method ini akan bekerja mengikuti tipe yang telah kita set pada method
+         * slidingWindowType(), jikalau kita set paraperter dari method slidingWindowType()
+         * adalah SlideingWindowType.COUNT_BASED maka artinya jikalau sudah ada 
+         * 10 request yang telah di eksekusi maka circuit brekaer akan mulai
+         * menghitung eksekusi yang error dari 10 requst tersebut,
+         * 
+         * dan jikalau kita set parameter pada slidingWindowType() nya itu
+         * SlidingWindowType.TIME_BASED maka ini artinya jikalau
+         * circuit breaker sudah menerima requst selama 10 detik maka
+         * circuit breaker akan mulai menghitung jumlah eksekusi yang error
+         * selama 10 detik tersebut.
+         */
+        .slidingWindowSize(10)
+        /**
+         * minimumNumberOfCalls(10), ini artinya jikalau dalam eksekusi 
+         * request nya itu terjadi error sebanyak 10 kali maka 
+         * circuit breaker langsung mengubah state nya menjadi OPEN
+         * dan menolak semua request, method ini biasanya dikombinasikan
+         * dengan slidingWindowType dengan patameter TIME_BASED.
+         * 
+         * misalnya pada slidingWindowType kita set paramternya
+         * TIME_BASED maka pada method slidingWIndowSize otomatis
+         * akan menghitung eksekusi yang error berdasarkan waktu,
+         * misalnya pada method slidingWindowSize nya kita set 20,
+         * maka jikalau sudah 20 detik circuit breaker akan mulai
+         * menghitung eksekusi error nya, dan pada method
+         * minimumNumberOfCalls(10), maka ini kita tidak perduli sudah berapa
+         * detik circuit breaker menerima requst, jikalau eksekusi error nya
+         * terjadi 10 kali maka state akan diubah menjadi OPEN
+         */
+        .minimumNumberOfCalls(10)
+        /**
+         * waitDurationInOpenState(Duration.ofSeconds(5)), ini maksudnya
+         * saat circuit breaker berada pada state OPEN, circuit 
+         * breaker akan mengunggu selama 5 detik sebelum masuk 
+         * ke state HALF_OPEN
+         */
+        .waitDurationInOpenState(Duration.ofSeconds(5))
+        /**
+         * permittedNumberOfCallsInHalfOpenState(4), ini maksudnya
+         * padasaat circuit breaker berada pada state HALF_OPEN
+         * circuit breaker akan menerima beberapa request saja,
+         * dalam contoh ini circuit breaker hanya menerima 4 requst saja
+         * dan jikalau 4 requst tersebut gagal jumlah eksekusinya lebih dari
+         * 10%(sesuai dengan yang kita set pada failureRateThreshold) maka
+         * circuit breaker akan kembali ke state OPEN dan menunggu beberapa waktu
+         * untuk masuk ke state HALF_OPEN
+         */
+        .permittedNumberOfCallsInHalfOpenState(4)
+        /**
+         * maxWaitDurationInHalfOpenState(Duration.ofSeconds(2)), ini artinya
+         * jikalau tidak ada requst pada saat di state HALF_OPEN
+         * selama 2 detik maka circuit breaker akan kembali ke state OPEN
+         * jikalau pada parameter maxWaitDurationInHalfOpenState() kita 
+         * set parameter nya dengan 0 maka artinya walaupun tidak ada 
+         * requst yang masuk ke circuit breaker maka circuit breaker
+         * akan terap berada pada state HALF_OPEN
+         */
+        .maxWaitDurationInHalfOpenState(Duration.ofSeconds(2))
+        /**
+         * slowCallDurationThreshold(Duration.ofSeconds(3)), ini artinya
+         * jika lama eksekusi kode program nya lebih dari 3 detik maka
+         * circuit breaker akan menghitung bahwa itu gagal, Walaupun
+         * dalam eksekusi nya tidak ada Exception samasekali
+         */
+        .slowCallDurationThreshold(Duration.ofSeconds(3))
+        /**
+         * slowCallRateThreshold(50), ini maksudnya jikalau
+         * 50 eksekusi nya itu selama 2(sesuai setingan kita pada method maxWaitDurationInHalfOpenState) 
+         * detik tidak selesai maka state akan berubah menajadi CLOSE
+         */
+        .slowCallRateThreshold(50)
+        /**
+         * ignoreExceptions(IllegalArgumentException.class), ini maksudnya adalah
+         * jikalau dalam eksekudi nya itu terjadi error dengan tipe exception
+         * IllegalArgumenException maka itu tidak dianggap sebuah eksekusi
+         * yang gagal.
+         */
+        .ignoreExceptions(IllegalArgumentException.class)
+        .build();
+
+        CircuitBreaker circuitBreaker = CircuitBreaker.of("circuitBreakerConfig", circuitBreakerConfig);
+        for (int i = 0; i < 200; i++) {
+            try {
+                Runnable runnable = CircuitBreaker.decorateRunnable(circuitBreaker, this::callMe);
+                runnable.run();
+            } catch (Exception e) {
+                log.error("ERROR {}", e.getMessage());
+            }
+        }
+    }
+```
