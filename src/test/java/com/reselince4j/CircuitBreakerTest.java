@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.SlidingWindowType;
 import lombok.extern.slf4j.Slf4j;
 
@@ -137,6 +138,34 @@ public class CircuitBreakerTest {
         .build();
 
         CircuitBreaker circuitBreaker = CircuitBreaker.of("circuitBreaker", circuitBreakerConfig);
+        for (int i = 0; i < 200; i++) {
+            try {
+                Runnable runnable = CircuitBreaker.decorateRunnable(circuitBreaker, this::callMe);
+                runnable.run();
+            } catch (Exception e) {
+                log.error("ERROR {}", e.getMessage());
+            }
+        }
+    }
+
+
+    @Test
+    public void circuitBreakerRegistry() {
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+        .slidingWindowType(SlidingWindowType.COUNT_BASED)
+        .failureRateThreshold(10f)
+        .slidingWindowSize(10)
+        .minimumNumberOfCalls(10)
+        .waitDurationInOpenState(Duration.ofSeconds(5))
+        .permittedNumberOfCallsInHalfOpenState(4)
+        .maxWaitDurationInHalfOpenState(Duration.ofSeconds(2))
+        .slowCallDurationThreshold(Duration.ofSeconds(3))
+        .slowCallRateThreshold(50)
+        .ignoreExceptions(IllegalArgumentException.class)
+        .build();
+        CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
+        circuitBreakerRegistry.addConfiguration("circuitBreakerConfig", circuitBreakerConfig);
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("circuitBreaker", "circuitBreakerConfig");
         for (int i = 0; i < 200; i++) {
             try {
                 Runnable runnable = CircuitBreaker.decorateRunnable(circuitBreaker, this::callMe);
