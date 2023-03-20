@@ -136,7 +136,7 @@ public class CircuitBreakerTest {
         .ignoreExceptions(IllegalArgumentException.class)
         .build();
 
-        CircuitBreaker circuitBreaker = CircuitBreaker.of("circuitBreakerConfig", circuitBreakerConfig);
+        CircuitBreaker circuitBreaker = CircuitBreaker.of("circuitBreaker", circuitBreakerConfig);
         for (int i = 0; i < 200; i++) {
             try {
                 Runnable runnable = CircuitBreaker.decorateRunnable(circuitBreaker, this::callMe);
