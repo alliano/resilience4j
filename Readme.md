@@ -859,3 +859,68 @@ contoj configuration circuit breaker :
         }
     }
 ```
+
+# CircuitBreakerRegistry
+Sama seperti modeul lainya, CircuitBreaker juga memiliki Registry untuk mengelola Object dari CircuitBreaker nya.  
+
+contoh :
+``` java
+    @Test
+    public void circuitBreakerRegistry() {
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+        .slidingWindowType(SlidingWindowType.COUNT_BASED)
+        .failureRateThreshold(10f)
+        .slidingWindowSize(10)
+        .minimumNumberOfCalls(10)
+        .waitDurationInOpenState(Duration.ofSeconds(5))
+        .permittedNumberOfCallsInHalfOpenState(4)
+        .maxWaitDurationInHalfOpenState(Duration.ofSeconds(2))
+        .slowCallDurationThreshold(Duration.ofSeconds(3))
+        .slowCallRateThreshold(50)
+        .ignoreExceptions(IllegalArgumentException.class)
+        .build();
+        CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
+        circuitBreakerRegistry.addConfiguration("circuitBreakerConfig", circuitBreakerConfig);
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("circuitBreaker", "circuitBreakerConfig");
+        for (int i = 0; i < 200; i++) {
+            try {
+                Runnable runnable = CircuitBreaker.decorateRunnable(circuitBreaker, this::callMe);
+                runnable.run();
+            } catch (Exception e) {
+                log.error("ERROR {}", e.getMessage());
+            }
+        }
+    }
+```
+
+# Decorators
+Pada kasus tertentu, kadang kita ingin menggabungkan beberapa module di Resilience4j secara sekaligus.
+Misalnya kita ingin menggabungkan Bulkhead dengan CircuitBreakser dan sebagainya.
+Resilience4j menyediakan module tambahan yang bernama Decorators, yang fungsinya untuk menggabungkan beberapa module secara bersamaan.
+Namun untuk saat ini Decorators belum bisa menggabungkan module TimeLimiter.
+
+contoh :
+``` java
+    @Test @SneakyThrows
+    public void testDecorators() {
+
+        RateLimiter rateLimiter = RateLimiter.of("rateLimiter", RateLimiterConfig.custom()
+        .limitForPeriod(10)
+        .limitRefreshPeriod(Duration.ofMinutes(1))  
+        .build());
+
+        Retry retry = Retry.of("retry", RetryConfig.custom()
+        .maxAttempts(10)
+        .waitDuration(Duration.ofMillis(10))
+        .build());
+
+        Runnable runnable = Decorators.ofRunnable(() -> callMe())
+        .withRateLimiter(rateLimiter)
+        .withRetry(retry)
+        .decorate();
+
+        for (int i = 0; i < 200; i++) {
+            new Thread(runnable).start();
+        }
+        Thread.sleep(10_000L);
+```
