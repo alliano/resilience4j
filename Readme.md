@@ -962,4 +962,68 @@ contoh :
         System.out.println(supplier.get());
     }
 ```
-# 
+# Event Publisher
+Semua module di resilience4j memiliki fitur yang namanya event publisher.
+Fitur ini digunakan untuk mengiri event kejadian ketika sesuatu kejadian terjadi.
+Contohnya, kita inin mendapatkan event ketika Retry terjadi success, atau Retry nya itu error.
+Untuk mendapatkan event publisher object, kita bisa menggunakan getEventPublisher() pada module yang tersedia di reselience4j.   
+
+contoh :
+``` java
+    @Test
+    public void testEventPublisher() {
+        Retry retry = Retry.ofDefaults("retry");
+
+        /**
+         * disini kita menambahkan even publiser ketika ada  
+         * sauatu kejadian , misalnya saat error terjadi 
+         * maka log ini akan di eksekusi
+         */
+        retry.getEventPublisher().onError(event -> log.info("Sorry we have some problem, please just a minute"));
+        retry.getEventPublisher().onRetry(event -> log.info("We will retry the excecution again"));
+        retry.getEventPublisher().onSuccess(event -> log.info("Cograts The excecution is successfuly"));
+
+        try {
+            Supplier<String> supplier = Retry.decorateSupplier(retry, () -> callMe());
+            supplier.get();
+        } catch (Exception e) {
+            System.out.println("eksekusi yang gagal walaupun sudah di retry : "+retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt());
+            System.out.println("eksekusi yang gagal tampa retry : "+retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt());
+            System.out.println("eksekusi yang berhasil setelah di retry : "+retry.getMetrics().getNumberOfSuccessfulCallsWithRetryAttempt());
+            System.out.println("eksekusi yang berhasil tampa di retry : "+retry.getMetrics().getNumberOfSuccessfulCallsWithoutRetryAttempt());
+        }
+    }
+```
+
+# Event Publisher Registry
+Semua Registry juga memiliki Event Publisher.
+yang membedakan adalah, Event Publisher di registry hanya digunakan untuk kejadian seperti menambah object, menghapaus atau megubah object pada registry.
+
+contoh : 
+``` java
+    @Test
+    public void testEvenRegistry() {
+        RetryRegistry retryRegistrty = RetryRegistry.ofDefaults();
+        retryRegistrty.getEventPublisher().onEntryAdded(event -> {
+            log.info("new retry added with name {}", event.getAddedEntry().getName());
+            log.info("created at {}", event.getCreationTime());
+            log.info("type {}", event.getEventType().name());
+        });
+        /**
+         * jika di eksekusi maka ada 2 event yaang terdeteksi
+         * karena jikalau kita membuat object dengan nama  yang sama pada 
+         * registry nya itu akan megembalikan object yang sama
+         */
+        retryRegistrty.retry("service1");
+        retryRegistrty.retry("service1");
+        retryRegistrty.retry("service2");
+    }
+```
+
+# Intregasi dengan Liberary Lain
+Resilence4j sangat flexsibel untuk di intregasikan dengan liberary atau di implementasikan pada terknologi lain misalnya :
+- Kotlin : https://resilience4j.readme.io/docs/getting-started-4
+- Reactive java/RXjava : https://resilience4j.readme.io/docs/getting-started-2
+- Project Reactor : https://resilience4j.readme.io/docs/getting-started-1
+- SpringBoot : https://resilience4j.readme.io/docs/getting-started-3
+- Micrometer : https://resilience4j.readme.io/docs/micrometer
