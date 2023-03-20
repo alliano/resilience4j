@@ -728,12 +728,12 @@ Dan jikalau terjadi error diatas 50%, maka circuit breaker akan masuk pada state
 Saat kita membuat circuit breaker, kita bisa mengubah mode pengaturan berbasis hitungan atau waktu, defaul nya menggunakan hitungan dengan jumlah minimal 100 requst terakhir yang gagal.
 Kita bisa mengubahanya menjadi mode waktu, sehingga error rate dihitung berdasarkan durasi waktu.
 
-|   config property                         |   Default value   |   Description 
-|-------------------------------------------|-------------------|--------------------------------------------------------------------------
-|   failurRateThreshold                     |         50        |   Minimal Presentasi error rate state untuk memasuki state OPEN
-|   slidingWindowType                       |     COUNT_BASE    |   Tipe mode sliding window, count (hitungan), atau duration (durasi waktu)
-|   slidingWindowSize                       |         100       |   Jumlah sliding window yang akan di record pada waktu state CLOSE
-|   minimumNumberOfCalls                    |         100       |   Jumlah minimal eksekusi sebelum error rate dihitung
-|   waitDurationInOpenState                 |       600[ms]     |   Waktu tunggu state OPEN sebelum memasuki state HALF_OPEN
-|   permitterNumberOfCallsInHalfOpenState   |         10        |   Jumlah eksekusi yang diperbolehkan ketika circuit breaker berada pada state HALF_OPEN
-|   maxWaitDurationInHalfOpenState          |         0[ms]     |   Waku maksimal menunggu saat berada pada state HALF_OPEN untuk kemabali ke state OPEN. jika 0 artinya waktu tunggu tidak terbatas
+|   config property                         |   Default value   |   Description                                                                                                                        |
+|-------------------------------------------|-------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+|   failurRateThreshold                     |         50        |   Minimal Presentasi error rate state untuk memasuki state OPEN                                                                      |
+|   slidingWindowType                       |     COUNT_BASE    |   Tipe mode sliding window, count (hitungan), atau duration (durasi waktu)                                                           |
+|   slidingWindowSize                       |         100       |   Jumlah sliding window yang akan di record pada waktu state CLOSE                                                                   |
+|   minimumNumberOfCalls                    |         100       |   Jumlah minimal eksekusi sebelum error rate dihitung                                                                                |
+|   waitDurationInOpenState                 |       600[ms]     |   Waktu tunggu state OPEN sebelum memasuki state HALF_OPEN                                                                           |
+|   permitterNumberOfCallsInHalfOpenState   |         10        |   Jumlah eksekusi yang diperbolehkan ketika circuit breaker berada pada state HALF_OPEN                                              |
+|   maxWaitDurationInHalfOpenState          |         0[ms]     |   Waku maksimal menunggu saat berada pada state HALF_OPEN untuk kemabali ke state OPEN. jika 0 artinya waktu tunggu tidak terbatas   |
