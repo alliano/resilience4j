@@ -722,7 +722,7 @@ contoh membuat circuit breaker :
 ```
 
 # Circuit Breaker Config
-Secara default, circuit breaker akan mencoba menghitung jumlah error rate setelah 100 kali eksekusi.
+Secara default, circuit breaker akan mencoba menghitung jumlah error rate setelah 100 kali eksekusi terakhir.
 Dan jikalau terjadi error diatas 50%, maka circuit breaker akan masuk pada state OPEN, dan otomatis semua request akan ditolak.
 
 # Circuit Breaker Config Mode
@@ -738,3 +738,7 @@ Kita bisa mengubahanya menjadi mode waktu, sehingga error rate dihitung berdasar
 |   waitDurationInOpenState                 |       600[ms]     |   Waktu tunggu state OPEN sebelum memasuki state HALF_OPEN                                                                           |
 |   permitterNumberOfCallsInHalfOpenState   |         10        |   Jumlah eksekusi yang diperbolehkan ketika circuit breaker berada pada state HALF_OPEN                                              |
 |   maxWaitDurationInHalfOpenState          |         0[ms]     |   Waku maksimal menunggu saat berada pada state HALF_OPEN untuk kemabali ke state OPEN. jika 0 artinya waktu tunggu tidak terbatas   |
+|   slowCallDurationThreshold               |       6000[ms]    |   Lama waktu eksekusi dianggap lambat                                                                                                |
+|   slowCallRateThreshold                   |         100       |   Konfigurasi Threshold untuk eksekusi slow, jika menyentuh threshold ini, maka state akan berubah menjadi OPEN                      |
+|   ignoreExceptions                        |        empty      |   Exception yang tidak dianggap error                                                                                                |
+
