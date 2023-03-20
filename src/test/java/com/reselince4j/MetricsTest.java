@@ -25,7 +25,7 @@ public class MetricsTest {
             Supplier<String> supplier = Retry.decorateSupplier(retry, () -> sayHello());
             supplier.get();
         } catch (Exception e) {
-            System.out.println("eksekusi yang gagal setelah di retry : "+retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt());
+            System.out.println("eksekusi yang gagal walaupun sudah di retry : "+retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt());
             System.out.println("eksekusi yang gagal tampa retry : "+retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt());
             System.out.println("eksekusi yang berhasil setelah di retry : "+retry.getMetrics().getNumberOfSuccessfulCallsWithRetryAttempt());
             System.out.println("eksekusi yang berhasil tampa di retry : "+retry.getMetrics().getNumberOfSuccessfulCallsWithoutRetryAttempt());
