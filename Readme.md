@@ -923,4 +923,43 @@ contoh :
             new Thread(runnable).start();
         }
         Thread.sleep(10_000L);
+    }
 ```
+# Fallback
+Untk kasus dimna functional interface bisa mengembalikan value, maka kita bisa menambahkan fallback didalam Decorators.
+Artinya, jika terjadi error ketika melakukan eksekusi maka secara otomatis fungsi fallback akan dipanggil.
+
+contoh : 
+``` java
+    @Test @SneakyThrows
+    public void testFallback() {
+
+        RateLimiter rateLimiter = RateLimiter.of("rateLimiter", RateLimiterConfig.custom()
+        .limitForPeriod(10)
+        .limitRefreshPeriod(Duration.ofMinutes(1))
+        .build());
+
+        Retry retry = Retry.of("retry", RetryConfig.custom()
+        .maxAttempts(10)
+        .waitDuration(Duration.ofMillis(10))
+        .build());
+
+        Bulkhead bulkhead = Bulkhead.of("bulkhead", BulkheadConfig.custom()
+        .maxConcurrentCalls(10)
+        .maxWaitDuration(Duration.ofSeconds(1))
+        .build());
+
+        Supplier<String> supplier = Decorators.ofSupplier(() -> getName())
+        .withBulkhead(bulkhead)
+        .withRetry(retry)
+        .withRateLimiter(rateLimiter)
+        /**
+         * jikalau semua modul yang kita tambahakan (rateLimiter, bulkhead, retry) error
+         * maka method waitFallback akan di eksekusi
+         */
+        .withFallback((throwable) -> "Sorry the name that you loking for not found")
+        .decorate();
+        System.out.println(supplier.get());
+    }
+```
+# 
